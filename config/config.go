@@ -121,7 +121,7 @@ var (
 			AllowedBlockGasResidue:        10000,
 			MaxCacheSize:                  0,
 			PollInitialCandidatesInterval: 10 * time.Second,
-			EnableHistoryStateDB:          false,
+			EnableArchiveMode:             false,
 		},
 		ActPool: ActPool{
 			MaxNumActsPerPool:  32000,
@@ -195,6 +195,7 @@ var (
 	// Validates is the collection config validation functions
 	Validates = []Validate{
 		ValidateRollDPoS,
+		ValidateArchiveMode,
 		ValidateDispatcher,
 		ValidateAPI,
 		ValidateActPool,
@@ -232,8 +233,8 @@ type (
 		Committee       committee.Config `yaml:"committee"`
 
 		EnableTrielessStateDB bool `yaml:"enableTrielessStateDB"`
-		// EnableHistoryStateDB is only meaningful when EnableTrielessStateDB is false
-		EnableHistoryStateDB bool `yaml:"enableHistoryStateDB"`
+		// EnableArchiveMode is only meaningful when EnableTrielessStateDB is false
+		EnableArchiveMode bool `yaml:"enableArchiveMode"`
 		// EnableAsyncIndexWrite enables writing the block actions' and receipts' index asynchronously
 		EnableAsyncIndexWrite bool `yaml:"enableAsyncIndexWrite"`
 		// CompressBlock enables gzip compression on block data
@@ -574,6 +575,15 @@ func ValidateRollDPoS(cfg Config) error {
 		return errors.Wrap(ErrInvalidCfg, "roll-DPoS event chan size should be greater than 0")
 	}
 	return nil
+}
+
+// ValidateArchiveMode validates the state factory setting
+func ValidateArchiveMode(cfg Config) error {
+	if !cfg.Chain.EnableArchiveMode || !cfg.Chain.EnableTrielessStateDB {
+		return nil
+	}
+
+	return errors.Wrap(ErrInvalidCfg, "Archive mode is incompatible with trieless state DB")
 }
 
 // ValidateAPI validates the api configs
